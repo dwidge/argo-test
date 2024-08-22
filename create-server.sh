@@ -196,7 +196,7 @@ fi
 echo -e "Retrieving the public key for kubeseal..."
 echo -e "${YELLOW}"
 kubeseal --fetch-cert --controller-namespace kube-system
-kubeseal --fetch-cert --controller-namespace kube-system > cert.pem
+kubeseal --fetch-cert --controller-namespace kube-system > sealed-secrets-public-cert.pem
 echo -e "${RESET}"
 
 # Bring the port forward process to the front
