@@ -57,10 +57,27 @@ fi
 # Install ArgoCD CLI
 if ! command_exists argocd; then
     echo "Installing ArgoCD CLI..."
-
     curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
     sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
     rm argocd-linux-amd64
+fi
+
+# Install kubeseal if not installed
+if ! command_exists kubeseal; then
+    echo "Installing kubeseal..."
+
+    # Fetch the latest sealed-secrets version using GitHub API
+    KUBESEAL_VERSION=$(curl -s https://api.github.com/repos/bitnami-labs/sealed-secrets/tags | jq -r '.[0].name' | cut -c 2-)
+
+    # Check if the version was fetched successfully
+    if [ -z "$KUBESEAL_VERSION" ]; then
+        echo "Failed to fetch the latest KUBESEAL_VERSION"
+        exit 1
+    fi
+
+    curl -OL "https://github.com/bitnami-labs/sealed-secrets/releases/download/v${KUBESEAL_VERSION}/kubeseal-${KUBESEAL_VERSION}-linux-amd64.tar.gz"
+    tar -xvzf kubeseal-${KUBESEAL_VERSION}-linux-amd64.tar.gz kubeseal
+    sudo install -m 755 kubeseal /usr/local/bin/kubeseal
 fi
 
 # Find an open port starting from the default
@@ -90,7 +107,6 @@ CLUSTER_NAME=${CLUSTER_NAME:-mycluster}
 read -p "Enter the Git repository URL to link with ArgoCD (default none): " REPO_URL
 
 if [[ -n $REPO_URL ]]; then
-
     # Ask for the application's branch
     read -p "Enter the Git repository branch for the application (default 'main'): " BRANCH
     BRANCH=${BRANCH:-main}
@@ -105,7 +121,6 @@ if [[ -n $REPO_URL ]]; then
     # Ask for the target namespace
     read -p "Enter the target namespace (default 'default'): " TARGET_NAMESPACE
     TARGET_NAMESPACE=${TARGET_NAMESPACE:-default}
-
 fi
 
 # Check if the cluster already exists
@@ -172,6 +187,13 @@ if [[ -n $REPO_URL ]]; then
     fi
 
 fi
+
+# Display the public key for kubeseal
+echo -e "Retrieving the public key for kubeseal..."
+echo -e "${YELLOW}"
+kubeseal --fetch-cert --controller-namespace kube-system
+kubeseal --fetch-cert --controller-namespace kube-system > cert.pem
+echo -e "${RESET}"
 
 # Bring the port forward process to the front
 wait $PF_PID
