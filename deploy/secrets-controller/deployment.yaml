@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sealed-secrets-controller
+  namespace: kube-system
+  labels:
+    app: sealed-secrets-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sealed-secrets-controller
+  template:
+    metadata:
+      labels:
+        app: sealed-secrets-controller
+    spec:
+      serviceAccountName: sealed-secrets-controller
+      containers:
+        - name: sealed-secrets-controller
+          image: quay.io/bitnami/sealed-secrets-controller:v0.27.1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080

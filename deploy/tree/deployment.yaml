@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tree
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tree
+  template:
+    metadata:
+      labels:
+        app: tree
+    spec:
+      imagePullSecrets:
+        - name: github-registry-secret
+      containers:
+        - name: tree
+          image: ghcr.io/lx-team-content/interactive-video-tree:latest
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: config-volume
+              mountPath: /home/static/config.json
+              subPath: config.json
+      volumes:
+        - name: config-volume
+          configMap:
+            name: app-config
