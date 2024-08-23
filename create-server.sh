@@ -174,18 +174,20 @@ if [[ -n $REPO_URL ]]; then
         echo -e "Failed to add the repository $REPO_URL to ArgoCD."
     fi
 
-    # Create a new application
+    # Create a new application with auto-sync, auto-prune, and self-heal
     argocd app create $APP_NAME \
         --repo $REPO_URL \
         --path $REPO_PATH \
         --dest-server https://kubernetes.default.svc \
         --dest-namespace $TARGET_NAMESPACE \
         --sync-policy automated \
+        --sync-option Prune=true \
+        --sync-option SelfHeal=true \
         --revision $BRANCH \
         --directory-recurse
 
     if [ $? -eq 0 ]; then
-        echo -e "${YELLOW}Application $APP_NAME has been created and is set to sync automatically.${RESET}"
+        echo -e "${YELLOW}Application $APP_NAME has been created and is set to sync automatically with prune and self-heal options enabled.${RESET}"
     else
         echo -e "${YELLOW}Failed to create the application $APP_NAME.${RESET}"
     fi
