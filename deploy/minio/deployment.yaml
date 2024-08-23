@@ -1,0 +1,73 @@
+# deploy/minio/helm-chart.yaml
+apiVersion: v2
+name: minio
+description: MinIO is a high-performance, S3-compatible object storage
+type: application
+version: 5.3.5
+appVersion: "latest"
+dependencies:
+  - name: minio
+    repository: https://charts.bitnami.com/bitnami
+    version: 8.5.1
+---
+# deploy/minio/minio-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      containers:
+        - name: minio
+          image: bitnami/minio:latest
+          ports:
+            - containerPort: 9000
+          env:
+            - name: MINIO_ACCESS_KEY
+              value: "minioadmin"
+            - name: MINIO_SECRET_KEY
+              value: "minioadmin"
+          volumeMounts:
+            - name: minio-data
+              mountPath: /data
+      volumes:
+        - name: minio-data
+          persistentVolumeClaim:
+            claimName: minio-data-pvc
+---
+# deploy/minio/minio-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: default
+spec:
+  type: NodePort
+  ports:
+    - port: 9000
+      targetPort: 9000
+      nodePort: 30004
+  selector:
+    app: minio
+---
+# deploy/minio/minio-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio-data-pvc
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
