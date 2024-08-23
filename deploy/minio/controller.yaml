@@ -13,9 +13,15 @@ spec:
       releaseName: minio
       parameters:
         - name: auth.rootUser
-          value: minio-admin
+          valueFrom:
+            secretKeyRef:
+              name: minio-secret
+              key: MINIO_ROOT_USER
         - name: auth.rootPassword
-          value: minio-secret-password
+          valueFrom:
+            secretKeyRef:
+              name: minio-secret
+              key: MINIO_ROOT_PASSWORD
   destination:
     server: "https://kubernetes.default.svc"
     namespace: default
